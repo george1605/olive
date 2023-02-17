@@ -89,6 +89,14 @@ void ol_draw_rect(u32* ptr, int x, int y, int w, int h)
       ptr[j*WIDTH+i] = COLOR;
 }
 
+void ol_zoom(OlWindow win, int x, int y, int s)
+{
+  int color = win.front[y * win.w + x];
+  for(int i = x;i <= x+s;i++)
+    for(int j = y;j <= y+s;j++)
+      win.front[j * win.w + i] = color;
+}
+
 u8* ol_alloc(size_t size, int bpm)
 {
   if(size == 0)

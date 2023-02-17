@@ -18,12 +18,19 @@ typedef struct {
     u32* buf; // pixel buffer
 } OlPanel;
 
-OlPanel ol_sdl_new(char* title, int w, int h, u32 flags)
+OlPanel ol_sdl_new(const char* title, int w, int h, u32 flags)
 {
     OlPanel panel;
     panel.win = SDL_CreateWindow(title, SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED, w, h, flags);
     panel.buf = NULL;
     return panel;
+}
+
+void ol_sdl_free(OlPanel panel)
+{
+    SDL_DestroyWindow(panel.win);
+    if(panel.buf)
+        free(panel.buf);
 }
 
 int ol_closed(OlPanel panel)
