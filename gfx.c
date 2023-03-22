@@ -163,6 +163,11 @@ static OlColor lerp(OlColor col1, OlColor col2, float pos)
   return t;
 }
 
+static OlColor blerp(OlColor cols[4], float tx, float ty)
+{
+  return lerp(lerp(cols[0], cols[1], tx), lerp(cols[2], cols[3], tx), ty);
+}
+
 OlColor color(int r, int g, int b)
 {
   OlColor x;
@@ -181,6 +186,34 @@ void ol_gradient(OlWindow win, OlColor col1, OlColor col2, int width, int height
         win.front[j * win.w + i] = RGB(last.r, last.g, last.b);
     }
     last = lerp(col1, col2, (float)i/(float)width);
+  }
+}
+
+void ol_load_ppm(char* fname, OlWindow* win)
+{
+  FILE* fp = fopen(fname, "r");
+  if(fgetc(fp) != 'P' || strcmp(fgetc(fp), "63"))
+    return;
+  unsigned int _newl = fgetc(fp), c = 0;
+  fscanf("%d %d %d\n", &(win->w), &(win->h), &_newl);
+  for(int i = 0;i <= win->w * win->h;i++)
+  {
+    fread(win->front + c, 1, 3, fp);
+    c += 3;
+  }
+  fclose(fp);
+}
+
+void ol_bgradient(OlWindow win, OlColor cols[4], int width, int height)
+{
+  OlColor last = blerp(cols, 0, 0);
+  for(int i = 1;i <= width;i++)
+  {
+    for(int j = 1;j <= height;j++)
+    {       
+        last = blerp(cols, (float)i/(float)width, (float)j/(float)height);
+        win.front[j * win.w + i] = RGB(last.r, last.g, last.b);
+    }
   }
 }
 

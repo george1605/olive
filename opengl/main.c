@@ -1,3 +1,5 @@
+#include <windows.h>
+#include <gl/gl.h>
 #include "olivegl.h"
 
 LRESULT CALLBACK WindowProc(HWND, UINT, WPARAM, LPARAM);
@@ -19,21 +21,7 @@ int WINAPI WinMain(HINSTANCE hInstance,
     float theta = 0.0f;
 
     /* register window class */
-    wcex.cbSize = sizeof(WNDCLASSEX);
-    wcex.style = CS_OWNDC;
-    wcex.lpfnWndProc = WindowProc;
-    wcex.cbClsExtra = 0;
-    wcex.cbWndExtra = 0;
-    wcex.hInstance = hInstance;
-    wcex.hIcon = LoadIcon(NULL, IDI_APPLICATION);
-    wcex.hCursor = LoadCursor(NULL, IDC_ARROW);
-    wcex.hbrBackground = (HBRUSH)GetStockObject(BLACK_BRUSH);
-    wcex.lpszMenuName = NULL;
-    wcex.lpszClassName = "GLSample";
-    wcex.hIconSm = LoadIcon(NULL, IDI_APPLICATION);;
-
-
-    if (!RegisterClassEx(&wcex))
+    if (!ol_register_win(hInstance))
         return 0;
 
     /* create main window */
@@ -51,7 +39,7 @@ int WINAPI WinMain(HINSTANCE hInstance,
             /* handle or dispatch messages */
             if (msg.message == WM_QUIT)
             {
-                bQuit = TRUE;
+               // bQuit = TRUE;
             }
             else
             {
@@ -69,16 +57,17 @@ int WINAPI WinMain(HINSTANCE hInstance,
 
             glPushMatrix();
             GetCursorPos(&p);
+            if(p.x > 100)
+            {
+                OlWindow win = ol_capturegl(500, 500);
+                ol_save_ppm("main.ppm", win);
+            }
             glRotatef(theta, p.x, p.y, 1.0f);
-
-            glBegin(GL_TRIANGLES);
-
-                glColor3f(1.0f, 0.0f, 0.0f);   glVertex2f(0.0f,   1.0f);
-                glColor3f(0.0f, 1.0f, 0.0f);   glVertex2f(0.87f,  -0.5f);
-                glColor3f(0.0f, 0.0f, 1.0f);   glVertex2f(-0.87f, -0.5f);
-
+            glBegin(GL_POLYGON);
+                glVertex3d(1.0, -1.2, 2.1); 
+                glVertex3d(1.0, 3.2, -2.4);
+                glVertex3d(2.0, -2.5, 4.5);
             glEnd();
-
             glPopMatrix();
 
             SwapBuffers(hDC);
@@ -163,4 +152,3 @@ void DisableOpenGL (HWND hwnd, HDC hDC, HGLRC hRC)
     wglDeleteContext(hRC);
     ReleaseDC(hwnd, hDC);
 }
-
