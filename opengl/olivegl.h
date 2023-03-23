@@ -37,7 +37,7 @@ void ol_loadbmp(char* fname, OlWindow* ctx)
 #include <windows.h>
 HWND ol_create_win(char* name, int width, int height)
 {
-    return CreateWindowEx(0,
+    return CreateWindowExA(0,
                           "GLSample",
                           name,
                           WS_OVERLAPPEDWINDOW,
@@ -67,7 +67,7 @@ int ol_register_win(HINSTANCE hInstance)
     wcex.lpszClassName = "GLSample";
     wcex.hIconSm = LoadIcon(NULL, IDI_APPLICATION);
 
-    if (!RegisterClassEx(&wcex))
+    if (!RegisterClassExA(&wcex))
         return 0;
 }
 #endif

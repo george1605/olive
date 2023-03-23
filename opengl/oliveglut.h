@@ -15,4 +15,13 @@ void ol_glut_init(int* argc, char** argv)
     glutInitDisplayMode(GLUT_SINGLE | GLUT_RGB);
 }
 
+int ol_contextgl(int win, int x, int y, int w, int h, void(*draw)())
+{
+    if(!win)
+        return;
+    int x = glutCreateSubWindow(win, x, y, w, h);
+    glutDisplayFunc(draw);
+    return x;
+}
+
 #endif 
