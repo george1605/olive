@@ -1,8 +1,12 @@
-#include "../gfx.c"
+#ifndef __OL_SDL__
+#define __OL_SDL__
+#define SDL_MAIN_HANDLED
 #include <SDL2/SDL.h>
-#undef main
+#include <SDL2/SDL_timer.h>
+#include <stdio.h>
+#include <stdint.h>
 #define OL_WIN_OPENGL SDL_WINDOW_OPENGL
-#define OL_WIN_BASE SDL_WINDOW_RESIZABLE | SDL_WINDOW_BORDERLESS
+#define OL_WIN_BASE SDL_WINDOW_RESIZABLE | SDL_WINDOW_MAXIMIZED
 
 void ol_sdl_init()
 {
@@ -15,10 +19,10 @@ void ol_sdl_init()
 
 typedef struct {
     SDL_Window* win;
-    u32* buf; // pixel buffer
+    uint32_t* buf; // pixel buffer
 } OlPanel;
 
-OlPanel ol_sdl_new(const char* title, int w, int h, u32 flags)
+OlPanel ol_sdl_new(const char* title, int w, int h, uint32_t flags)
 {
     OlPanel panel;
     panel.win = SDL_CreateWindow(title, SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED, w, h, flags);
@@ -39,11 +43,4 @@ int ol_closed(OlPanel panel)
     SDL_PollEvent(&event);
     return (event.type != SDL_QUIT);
 }
-
-int main()
-{
-    ol_sdl_init();
-    OlPanel p = ol_sdl_new("Window", 1000, 1000, 0);
-    while(1);
-}
-
+#endif
