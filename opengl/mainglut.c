@@ -26,11 +26,19 @@ void init()
     gluOrtho2D(-1.0, 1.0, -1.0, 1.0);
 }
 
+void set(int p)
+{
+    if(p == 0)
+        glutHideWindow();
+}
+
 int main(int argc, char** argv) 
 {
     ol_glut_init(&argc, argv);
     ol_create_win("wow", 500, 500);
     glutDisplayFunc(display);
+    char* x[] = {"Test", NULL};
+    ol_glut_cmenu(x, set);
     init();
     glutMainLoop();
 }  

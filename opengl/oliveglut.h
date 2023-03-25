@@ -19,9 +19,24 @@ int ol_contextgl(int win, int x, int y, int w, int h, void(*draw)())
 {
     if(!win)
         return;
-    int x = glutCreateSubWindow(win, x, y, w, h);
+    int _x = glutCreateSubWindow(win, x, y, w, h);
     glutDisplayFunc(draw);
-    return x;
+    return _x;
+}
+
+int ol_glut_menu(char** opt, void(*f)(int))
+{
+    int i = glutCreateMenu(f), j = 0;
+    for(;opt[j] != NULL;j++)
+        glutAddMenuEntry(opt[j], j);
+    return i;
+}
+
+int ol_glut_cmenu(char** opt, void(*f)(int))
+{
+    int k = ol_glut_menu(opt, f);
+    glutAttachMenu(GLUT_RIGHT_BUTTON);
+    return k;
 }
 
 #endif 

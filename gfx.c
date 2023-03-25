@@ -6,6 +6,7 @@
 #ifndef RGB
 #define RGB(r,g,b) (r | (g << 8) | (b << 16))
 #endif
+#define GETBYTE(x, y) (x >> (8 * y)) & 0xFF
 #define RED RGB(255,0,0)
 #define BLUE RGB(0,0,255)
 #define GREEN RGB(0,255,0)
