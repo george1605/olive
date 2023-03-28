@@ -1,4 +1,4 @@
-# olive
+# olive - An extensive library
 - Based on Tsoding: https://github.com/tsoding/olive.c
 - Implemented gradients via Linear Interpolation and Line Rendering
 
@@ -6,3 +6,5 @@
 
 # Recent Update!
 - Added OpenGL support with functions like `ol_pushgl`
+- Added cURL API wrapper
+- Graphics via Linux Framebuffer `/dev/fb0`
