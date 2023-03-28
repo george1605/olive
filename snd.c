@@ -1,6 +1,7 @@
 #ifdef _WIN32
 #include <windows.h>
 #include <mmreg.h>
+#include <stdint.h>
 #define BASE_FREQ 44100
 #define SAMPLE_RATE 11025
 #define BSIZE 4096
@@ -13,6 +14,13 @@ WAVEFORMAT ol_waveformat(int freq, int chann)
     w.nAvgBytesPerSec = chann * freq * 2;
     w.wFormatTag = WAVE_FORMAT_PCM;
     return w;
+}
+
+// play via PC Speaker
+void ol_play_array(uint16_t* array, int size)
+{
+    for(int i = 0;i < size;i++)
+        Beep(array[i], 20);
 }
 
 void ol_sound_sine(char pBuffer[], int iFreq)

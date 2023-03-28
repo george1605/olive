@@ -27,8 +27,9 @@ OlInput ol_input_layer(uint32_t* ptr, int size, int type)
     {
         i.data = malloc(size * sizeof(float));
         ol_to_gray(ptr, i.data, size);
+    } else {
+        i.data = ptr, i.size = size;
     }
-    i.data = ptr, i.size = size;
     return i;
 }
 
