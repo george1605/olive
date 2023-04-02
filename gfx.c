@@ -13,6 +13,7 @@
 #define WHITE RGB(255,255,255)
 typedef unsigned char u8;
 typedef unsigned int u32;
+typedef struct { uint16_t x, y; } OlPoint;
 static int WIDTH, HEIGHT, COLOR = RED;
 
 inline void ol_fastswap(u8* ptr1, u8* ptr2)
@@ -177,6 +178,13 @@ OlColor color(int r, int g, int b)
   return x;
 }
 
+static int ol_linear( int n1 , int n2 , float perc )
+{
+    int diff = n2 - n1;
+
+    return n1 + ( diff * perc );
+}    
+
 void ol_gradient(OlWindow win, OlColor col1, OlColor col2, int width, int height)
 {
   OlColor last = lerp(col1, col2, 0);
@@ -187,6 +195,25 @@ void ol_gradient(OlWindow win, OlColor col1, OlColor col2, int width, int height
         win.front[j * win.w + i] = RGB(last.r, last.g, last.b);
     }
     last = lerp(col1, col2, (float)i/(float)width);
+  }
+}
+
+void ol_quad_bezier(OlWindow win, OlPoint points[3])
+{
+  int xa, xb, ya, yb, x, y;
+  for( float i = 0 ; i < 1 ; i += 0.01 )
+  {
+    // The Green Line
+    xa = ol_linear( points[0].x , points[1].x , i );
+    ya = ol_linear( points[0].y , points[1].y , i );
+    xb = ol_linear( points[1].x , points[2].x , i );
+    yb = ol_linear( points[1].y , points[2].y , i );
+
+    // The Black Dot
+    x = ol_linear( xa , xb , i );
+    y = ol_linear( ya , yb , i );
+
+    win.front[y * win.w + x] = COLOR;
   }
 }
 
@@ -254,7 +281,6 @@ void ol_line_bres(OlWindow win, int x1, int y1, int x2, int y2)
   }
 }
 
-typedef struct { uint16_t x, y; } OlPoint;
 void ol_triangle(OlWindow win, OlPoint p1, OlPoint p2, OlPoint p3)
 {
   ol_line_bres(win, p1.x, p1.y, p2.x, p2.y);

@@ -28,8 +28,9 @@ void* ol_init_fb(int* _fd)
 {
     fb_var_screeninfo p;
     int fd = ol_open_fb("/dev/fb0", &p);
-    return ol_map_fb(fd, &p);
+    .0
     *_fd = fd;
+    return ol_map_fb(fd, &p);
 }
 
 #endif
