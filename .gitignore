@@ -3,3 +3,4 @@
 *.elf
 *.dll
 gfx.c~
+*.webp

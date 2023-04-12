@@ -2,7 +2,7 @@
 #define OLIVEGL_H_INCLUDED
 
 #include <GL/gl.h>
-#include "../gfx.c"
+#include "../include/gfx.h"
 
 void ol_scale(GLfloat vertices[], float x, int length)
 {
@@ -35,6 +35,7 @@ void ol_loadbmp(char* fname, OlWindow* ctx)
 #include "oliveglut.h"
 #elif defined(_WIN32)
 #include <windows.h>
+
 HWND ol_create_win(char* name, int width, int height)
 {
     return CreateWindowExA(0,

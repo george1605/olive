@@ -8,3 +8,7 @@
 - Added OpenGL support with functions like `ol_pushgl`
 - Added cURL API wrapper
 - Graphics via Linux Framebuffer `/dev/fb0`
+
+# Upcoming Update!
+- Vlang support via C wrappers to library
+- Uses the default `sokol` gfx lib
