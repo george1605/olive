@@ -10,6 +10,21 @@ void ol_scale(GLfloat vertices[], float x, int length)
         vertices[i] *= x;
 }
 
+GLuint ol_texturegl()
+{
+    GLuint textureID;
+    glGenTextures(1, &textureID);
+    glBindTexture(GL_TEXTURE_2D, textureID);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+    return textureID;
+}
+
+void ol_displaygl(OlWindow win)
+{
+    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, win.w, win.h, 0, GL_RGB, GL_UNSIGNED_BYTE, win.front);
+}
+
 OlWindow ol_capturegl(int width, int height)
 {
     WIDTH = width, HEIGHT = height;

@@ -8,11 +8,12 @@
 #include <unistd.h>
 #include <sys/mman.h>
 #include <linux/fb.h>
+#include "../gfx.c"
 
 int ol_open_fb(const char* fbdev, fb_var_screeninfo* info)
 {
     int fbfd = open (fbdev, O_RDWR);
-    if(dbfd < 0) return;
+    if(fbfd < 0) return;
     ioctl (fbfd, FBIOGET_VSCREENINFO, info);
     return fbfd;
 }
@@ -28,9 +29,13 @@ void* ol_init_fb(int* _fd)
 {
     fb_var_screeninfo p;
     int fd = ol_open_fb("/dev/fb0", &p);
-    .0
     *_fd = fd;
     return ol_map_fb(fd, &p);
+}
+
+void ol_dump_fb(OlWindow win)
+{
+    
 }
 
 #endif

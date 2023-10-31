@@ -15,6 +15,16 @@ HBITMAP ol_win_flush(OlWindow ol, HDC dc)
     return btmp;
 }
 
+HWND ol_find_hwnd(const char* name)
+{
+    return FindWindowA(NULL, name);
+}
+
+void ol_capture_dc(HDC dc)
+{
+
+}
+
 void ol_set_dc(OlWindow ol, HDC dc)
 {
     if (dc == 0)
@@ -28,14 +38,4 @@ int ol_alloc_cons()
     if(!AllocConsole())
         return GetLastError();
     return 0;
-}
-
-int main()
-{
-    ol_setup(300, 400);
-    ol_alloc_cons();
-    OlWindow win = ol_new_win();
-    ol_fill(win, RED);
-    ol_win_flush(win, NULL);
-    while(1);
 }

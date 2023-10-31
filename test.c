@@ -1,3 +1,4 @@
+<<<<<<< Updated upstream
 #include "include/gfx.h"
 
 int main()
@@ -12,3 +13,16 @@ int main()
     ol_save_ppm("main.ppm", win);
     return 0;
 }
+=======
+#include "include/gfx.c"
+
+int main()
+{
+    ol_setup(450, 450);
+    OlWindow win = ol_new_win();
+    COLOR = RED;
+    ol_brescircle(win, 150, 160, 50);
+    ol_save_ppm("main.ppm", win);
+    return 0;
+}
+>>>>>>> Stashed changes
