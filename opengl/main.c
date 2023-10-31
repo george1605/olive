@@ -1,6 +1,7 @@
 #include <windows.h>
 #include <gl/gl.h>
 #include "olivegl.h"
+#include "oliveglut.h"
 
 LRESULT CALLBACK WindowProc(HWND, UINT, WPARAM, LPARAM);
 void EnableOpenGL(HWND hwnd, HDC*, HGLRC*);
@@ -57,10 +58,10 @@ int WINAPI WinMain(HINSTANCE hInstance,
 
             glPushMatrix();
             GetCursorPos(&p);
-            if(p.x > 100)
+            if(p.x > 200)
             {
-                OlWindow win = ol_capturegl(500, 500);
-                ol_save_ppm("main.ppm", win);
+                ol_save_screen("main.ppm");
+                break;
             }
             glRotatef(theta, p.x, p.y, 1.0f);
             glBegin(GL_POLYGON);

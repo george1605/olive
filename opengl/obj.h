@@ -25,13 +25,16 @@ void ol_obj_line(FILE* filename, char* buffer, int len)
 
 void ol_obj_read(FILE* fp)
 {
-    switch(fgetc(fp))
-    {
-        case 'v':
-            double v1, v2, v3;
-            fscanf(fp, "%lf %lf %lf", &v1, &v2, &v3);
-            glVertex3d(v1, v2, v3);
-        break;
+    char c;
+    while(c = fgetc(fp)) {
+        switch(c)
+        {
+            case 'v':
+                double v1, v2, v3;
+                fscanf(fp, "%lf %lf %lf", &v1, &v2, &v3);
+                glVertex3d(v1, v2, v3);
+            break;
+        }
     }
 }
 

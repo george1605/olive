@@ -7,13 +7,25 @@
 #define BSIZE 4096
 #define M_PI 3.1415926
 
-WAVEFORMAT ol_waveformat(int freq, int chann)
+WAVEFORMATEX ol_waveformat(int freq, int chann)
 {
-    WAVEFORMAT w;
+    WAVEFORMATEX w;
     w.nChannels = chann;
     w.nAvgBytesPerSec = chann * freq * 2;
+    w.nSamplesPerSec = 44100;       // Sample rate (e.g., 44100 Hz)
+    w.nBlockAlign = 2;              // Block alignment (channels * bits/sample / 8)
+    w.wBitsPerSample = 16;
     w.wFormatTag = WAVE_FORMAT_PCM;
     return w;
+}
+
+WAVEHDR ol_wavehdr(uint16_t * data)
+{
+    WAVEHDR waveHeader;
+    waveHeader.lpData = (LPSTR)data;
+    waveHeader.dwBufferLength = // Length of your sound data buffer
+    waveHeader.dwFlags = 0;
+    return waveHeader;
 }
 
 // play via PC Speaker
@@ -36,5 +48,9 @@ void ol_sound_sine(char pBuffer[], int iFreq)
 	    fAngle -= 2 * M_PI;
     }
 }
+
+#elif defined(__linux__)
+// TO DO HERE
+
 
 #endif

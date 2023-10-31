@@ -1,6 +1,7 @@
 #ifndef __OLIVE_GLUT__
 #define __OLIVE_GLUT__
 #include <gl/glut.h>
+#include "../include/gfx.c"
 
 int ol_create_win(char* name, int width, int height)
 {
@@ -13,6 +14,15 @@ void ol_glut_init(int* argc, char** argv)
 {
     glutInit(argc, argv);
     glutInitDisplayMode(GLUT_SINGLE | GLUT_RGB);
+}
+
+void ol_save_screen(char* filename)
+{
+    ol_setup(glutGet(GLUT_WINDOW_WIDTH), glutGet(GLUT_WINDOW_HEIGHT));
+    OlWindow win = ol_new_win();
+    glReadPixels(0, 0, WIDTH, HEIGHT, GL_RGB, GL_UNSIGNED_BYTE, win.front);
+    ol_save_ppm(filename, win);
+    free(win.front);
 }
 
 int ol_contextgl(int win, int x, int y, int w, int h, void(*draw)())

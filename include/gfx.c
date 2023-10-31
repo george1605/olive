@@ -170,6 +170,63 @@ EXPORT void ol_gradient(OlWindow win, OlColor col1, OlColor col2, int width, int
   }
 }
 
+typedef struct
+{
+  int x, y, z;
+} Ol3DPoint;
+
+EXPORT OlPoint ol_project(Ol3DPoint p)
+{
+  OlPoint p2;
+  p2.x = (double)p.x / (double)p.z;
+  p2.y = (double)p.y / (double)p.z;
+  return p2;
+}
+
+// projection from webgpu yeey
+EXPORT OlPoint ol_wg_project(Ol3DPoint p, OlWindow win)
+{
+  OlPoint p2;
+  p2.x = (int)(0.50f * (p.x + 1) * win.w + 0.5f);
+  p2.y = (int)(0.50f * (p.x + 1) * win.h + 0.5f);
+  return p2;
+}
+
+void ol_3dpoint(OlWindow win, Ol3DPoint p)
+{
+  OlPoint p2 = ol_wg_project(p, win);
+  win.front[p2.y * win.w + p2.x] = COLOR;
+}
+
+void ol_drawcircle(OlWindow win, int xc, int yc, int x, int y)
+{
+    ol_set_pixel(win.front, xc + x, yc + y, COLOR);
+    ol_set_pixel(win.front, xc - x, yc + y, COLOR);
+    ol_set_pixel(win.front, xc + x, yc - y, COLOR);
+    ol_set_pixel(win.front, xc - x, yc - y, COLOR);
+    ol_set_pixel(win.front, xc + y, yc + x, COLOR);
+    ol_set_pixel(win.front, xc - y, yc + x, COLOR);
+    ol_set_pixel(win.front, xc + y, yc - x, COLOR);
+    ol_set_pixel(win.front, xc - y, yc - x, COLOR);
+}
+
+void ol_brescircle(OlWindow win, int xc, int yc, int r) {
+    int x = 0, y = r;
+    int d = 3 - 2 * r;
+
+    while (x <= y) {
+        ol_drawcircle(win, xc, yc, x, y);
+        x++;
+        if (d > 0) {
+            y--;
+            d = d + 4 * (x - y) + 10;
+        } else {
+            d = d + 4 * x + 6;
+        }
+        ol_drawcircle(win, xc, yc, x, y);
+    }
+}
+
 EXPORT void ol_quad_bezier(OlWindow win, OlPoint points[3])
 {
   int xa, xb, ya, yb, x, y;
@@ -277,4 +334,10 @@ void ol_draw_circle(OlWindow win, int x, int y, int r)
 void ol_assign(FILE* fp, u8* ptr)
 {
   setbuf(fp, ptr);
+}
+
+void ol_map_function(OlWindow win, float start, float end, float(*f)(float))
+{
+    for(int i = start;i <= end;i++)
+        win.front[(int)(f(i) * win.w + i)] = COLOR; 
 }
