@@ -9,6 +9,7 @@
 #define OL_EHEIGHT    0x10 // same as OL_EWIDTH
 #define OL_EBUFOVER   0x20 // buffer overflow
 #define OL_ENOXDISP   0x40 // no X11 display, it is null
+#define OL_ENETWSA    0x80 // winsock WSA error at init
 
 #define OL_SCRNDIM   0x10 // checks if dimensions > screen w or h
 #define OL_UINTMAX   0x20 // checks if is bigger than 65000

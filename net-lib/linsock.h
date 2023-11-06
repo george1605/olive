@@ -1,5 +1,6 @@
 #ifndef __LIN_SOCK__
 #define __LIN_SOCK__
+#include "errors.h"
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -21,7 +22,15 @@ struct sockaddr_in ol_server_bind(int socket, int port, char* addr)
     if (bind(socket, (struct sockaddr*)&server_addr, sizeof(server_addr) < 0)) {
         perror("Bind failed");
         close(socket);
-        exit(1);
     }
+}
+
+int ol_server_listen(int sock)
+{
+    if(listen(sock, 0) < 0)
+    {
+        printf("listen() error: %s", strerror(errno));
+        ol_error = OL_ELISTEN;
+    }    
 }
 #endif

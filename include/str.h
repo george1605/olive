@@ -11,6 +11,9 @@
 #define JPG_MAGIC 2
 #define STR(s) (string){ .ptr = s, .size = strlen(s) }
 
+/**
+ * A list of magic headers of ELF, EXE and JPG
+*/
 char* magic_list[] = {
     "\x7f\x45\x4c\x46", "MZ", "\xFF\xD8\xFF\xE0"
 };
@@ -62,6 +65,11 @@ void ol_whitespaces(string arg, int* pos)
     for(i = 0;i < arg.size;i++)
         if(arg.ptr[i] == ' ')
             pos[k++] = i;
+}
+
+int ol_str_includes(string str, string substr)
+{
+    return (strstr(str.ptr, substr.ptr) != NULL);
 }
 
 char ol_str_valid(string input)

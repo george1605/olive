@@ -2,7 +2,6 @@
 
 int main()
 {
-    OlWindow win = ol_visual("flower.jpg");
-    ol_brescircle(win, 30, 40, 60);
+    OlWindow win = ol_visual_file("olive.exe");
     ol_save_ppm("main.ppm", win);
 }

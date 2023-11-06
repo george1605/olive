@@ -88,6 +88,18 @@ void ol_def_handler(OlMsg msg)
     printf("Event target is window with: %ix%i", win->w, win->h);
 }
 
+#ifdef __FreeBSD__
+int ol_bsd_newqueue()
+{
+    kq = kqueue();
+    if (kq == -1) {
+        perror("kqueue");
+    }
+    return kq;
+}
+
+#endif
+
 int main()
 {
     ol_setup(200, 200);

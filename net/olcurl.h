@@ -51,6 +51,34 @@ void ol_curl_cookies(CURL* curl, struct curl_slist *cookies)
     curl_easy_getinfo(curl, CURLINFO_COOKIELIST, &cookies);
 }
 
+static size_t ol_write_file(void *ptr, size_t size, size_t nmemb, FILE *stream)
+{
+    size_t written = fwrite(ptr, size, nmemb, stream);
+    return written;
+}
+
+// download file from http address
+void ol_curl_download(const char* url, const char* fname)
+{
+    CURLcode res;
+    CURL* curl = curl_easy_init();
+    if(!curl) {
+        fprintf(stderr, "Failed to initialize cURL.\n");
+        return;
+    }
+    FILE* fp = fopen(fname, "wb");
+    curl_easy_setopt(curl, CURLOPT_URL, url);
+
+    curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, ol_write_file);
+    curl_easy_setopt(curl, CURLOPT_WRITEDATA, fp);
+    res = curl_easy_perform(curl);
+    if (res != CURLE_OK) {
+        fprintf(stderr, "cURL failed: %s\n", curl_easy_strerror(res));
+    }
+    fclose(fp);
+    curl_easy_cleanup(curl);
+}
+
 void ol_initchunk(OlChunk *s) {
   s->len = 0;
   s->ptr = malloc(s->len+1);

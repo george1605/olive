@@ -1,7 +1,10 @@
+#ifndef __SOUND__
+#define __SOUND__
+#include <stdint.h>
+
 #ifdef _WIN32
 #include <windows.h>
 #include <mmreg.h>
-#include <stdint.h>
 #define BASE_FREQ 44100
 #define SAMPLE_RATE 11025
 #define BSIZE 4096
@@ -50,7 +53,27 @@ void ol_sound_sine(char pBuffer[], int iFreq)
 }
 
 #elif defined(__linux__)
-// TO DO HERE
+#include <unistd.h>
+#include <fcntl.h>
+#include <sys/ioctl.h>
 
+void ol_simple_sound(int freq, int duration)
+{
+    int value = (1193180 + freq / 2) / freq;
+    int fd = open("/dev/console", O_RDWR);
+    struct kbentry kb = {
+        1,  // Click type (0 = off, 1 = on)
+        value,         // Value for frequency (0 to 65535)
+        duration,      // Duration in ms
+    };
+    if (ioctl(fd, KDMKTONE, &kb) < 0) {
+        perror("Error in ioctl");
+        close(fd);
+        return;
+    }
+    close(fd);
+}
+
+#endif
 
 #endif

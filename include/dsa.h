@@ -2,11 +2,31 @@
 #define __DSA__
 #include <malloc.h>
 #include <stdlib.h>
+#include <stdint.h>
 
 typedef struct _OlList {
     int prop;
     struct _OlList* next, *prev;
 } OlLinkedList;
+
+typedef struct _OlStack {
+    void* ptr;
+    size_t size, top;
+} OlStack;
+
+OlStack ol_new_stack(size_t size)
+{
+    OlStack stack;
+    stack.ptr = malloc(size);
+    stack.size = size;
+    stack.top = 0;
+    return stack;
+}
+
+void ol_free_stack(OlStack stack)
+{
+    free(stack.ptr);
+}
 
 static OlLinkedList* ol_new_list_size(int size)
 {

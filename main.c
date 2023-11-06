@@ -1,15 +1,16 @@
-#include <string.h>
-#include <stdlib.h>
-#include <stdio.h>
-#include "include/dsa.h"
+#define _REDEF_MAIN_
+#include "core.h"
 
-int main()
+void __main(OlPlatform platform, OlArgs args)
 {
-    OlLinkedList* p = ol_new_list_size(10);
-    printf("Good her!");
-    ol_list_insert(p, p->next);
-    printf("Size: %i\n", ol_list_size(p));
-    printf("Look: %i\n", ol_find_cycle(p) != NULL);
-    ol_list_free(p);
-    return 0;
+    OlWindow* win = (OlWindow*)platform.video_handle;
+    ol_fill(*win, RED);
+    ol_save_ppm("wow.ppm", *win); 
+    free(win->front);
+    free(win);  
+}
+
+void __setup(OlPlatform* platform)
+{
+    ol_setupvid_platform(platform, 500, 400);
 }

@@ -14,6 +14,7 @@
 <<<<<<< Updated upstream
 - Vlang support via C wrappers to library
 - Uses the default `sokol` gfx lib
+- Working on Mobile Development(Android + JNI)
 =======
 - <s>Vlang support via C wrappers to library</s>
 - Linux sound lib
