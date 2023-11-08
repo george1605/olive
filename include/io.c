@@ -29,6 +29,47 @@ typedef struct _OlDevice {
     void(*write)(struct _OlDevice*, uint8_t*, size_t);
 } OlDevice;
 
+typedef struct {
+    OlTask* tasks;
+    size_t number, size;
+    int(*check)(OlIOContext*);
+} OlIOContext;
+
+OlIOContext ol_new_context(size_t size)
+{
+    OlIOContext ctx;
+    ctx.tasks = malloc(sizeof(OlTask) * size);
+    ctx.number = 0;
+    ctx.size = size;
+}
+
+void ol_post_context(OlIOContext context, OlTask task)
+{
+    if(context.number > context.size) return;
+    context.tasks[context.number++] = task;
+}
+
+void __ol_runctx(OlMsg msg)
+{
+    OlTask* task = (OlTask*)msg.target;
+    if(task == NULL) return;
+    ol_run_task(*task);
+}
+
+void ol_run_context(OlIOContext context)
+{
+    // you may not know, but it's an event loop
+    int id;
+    OlMsgQueue* queue = ol_new_queue(10);
+    while(!ol_queue_empty(queue))
+    {
+        ol_process_event(queue);
+        if((id = context.check(&context)) > -1)
+            ol_enqueue(queue, __ol_runctx, NULL, &(context.tasks[id])); // adds the new event to the queue
+    }
+    ol_free_queue(queue);
+}
+
 typedef struct
 {
     uint8_t* ptr;
@@ -83,7 +124,7 @@ void ol_lock_bufread(OlBuffer* buf, FILE* fp)
 void ol_bufget(OlBuffer* buf, OlDevice dev)
 {
     if(dev.read != NULL)
-        dev.read(buf->ptr, buf->size);
+        dev.read(&dev, buf->ptr, buf->size);
 }
 
 void ol_bufset(OlBuffer buf, FILE* stream)
@@ -104,6 +145,19 @@ void ol_bufflush_z(OlBuffer* buf, FILE* fp)
 {
     ol_bufflush(buf, fp);
     memset(buf->ptr, 0, buf->size);
+}
+
+void ol_bufzero(OlBuffer* buf)
+{
+    memset(buf->ptr, 0, buf->size);
+}
+
+// copies from buffer -> file buffer -> file
+void ol_bufflush_c(OlBuffer* buf, FILE* fp)
+{
+    fwrite(buf->ptr, 1, buf->size, fp);
+    fflush(fp);
+    buf->crs = 0;
 }
 
 void ol_bufresize(OlBuffer* buf, size_t size)
@@ -140,6 +194,7 @@ void ol_bufdelete(OlBuffer buf)
 }
 
 typedef struct _OlModule {
+    void* handle; // for ol_close_module()
     void(*init)(struct _OlModule*);
     void(*exit)(struct _OlModule*);
 } OlModule;
@@ -151,8 +206,23 @@ OlModule ol_read_module(char* fname)
         HANDLE hnd = LoadLibraryA(fname);
         mod.init = GetProcAddress(hnd, "ol_init");
         mod.exit = GetProcAddress(hnd, "ol_exit");
+        mod.handle = hnd;
+    #elif defined(__linux__)
+        mod.handle = dlopen(fname, RTLD_NOW);
+        mod.init = dlsym(mod.handle, "ol_init");
+        mod.exit = dlsym(mod.handle, "ol_exit");
     #endif
     return mod;
+}
+
+void ol_close_module(OlModule mod)
+{
+    if(mod.handle == NULL) return;
+    #ifdef _WIN32
+        CloseHandle(mod.handle);
+    #elif defined(__linux__)
+        dlclose(mod.handle);
+    #endif
 }
 
 static OlDevice* ol_regdevs;
@@ -275,6 +345,12 @@ void ol_register_usb(int number, OlCOMInfo info)
     dev.read = __ol_usbread;
     dev.write = __ol_usbwrite;
     ol_register_dev(dev);
+}
+
+void ol_unregister_usb()
+{
+    OlDevice dev = ol_find_dev("usb");
+    CloseHandle(dev.handle);
 }
 
 #endif

@@ -60,6 +60,11 @@ OlThread ol_new_thread(threadf threadFunc, void* args)
     return i;
 }
 
+void ol_wait_thread(OlThread thread)
+{
+    WaitForSingleObject(thread.handle, INFINITE);
+}
+
 void ol_wait_threads(OlTManager p)
 {
     int i;
@@ -97,5 +102,25 @@ void ol_close_thread(OlThread thread)
     pthread_cancel(thread.handle);
 }
 #endif
+
+typedef struct {
+    void(*function)(void);
+    int synchronous : 1;
+    int completed : 1;
+    int thread_complete : 1;
+    int return_on_cancel : 1;
+    OlLock lock;
+} OlTask;
+
+void ol_run_task(OlTask task)
+{
+    if(task.synchronous)
+        task.function();
+    else {
+        OlThread th;
+        th = ol_new_thread((threadf)task.function, NULL);
+        ol_wait_thread(th);
+    }
+}
 
 #endif

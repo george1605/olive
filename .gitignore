@@ -5,3 +5,6 @@
 gfx.c~
 *.webp
 docs/
+lib/
+SDL2/
+include/

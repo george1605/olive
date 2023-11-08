@@ -1,9 +1,18 @@
-#include "ol.c"
-
-int main(int argc, char** argv)
+#include <SDL2/SDL.h>
+#include <SDL2/SDL_timer.h>
+#include <stdio.h>
+ 
+int main(int argc, char *argv[])
 {
-    ol_sdl_init();
-    OlPanel p = ol_sdl_new("Window", 1000, 1000, 0);
-    while(1);
+ 
+    // returns zero on success else non-zero
+    if (SDL_Init(SDL_INIT_EVERYTHING) != 0) {
+        printf("error initializing SDL: %s\n", SDL_GetError());
+    }
+    SDL_Window* win = SDL_CreateWindow("GAME",
+                                       SDL_WINDOWPOS_CENTERED,
+                                       SDL_WINDOWPOS_CENTERED,
+                                       1000, 1000, 0);
+    while (1);
     return 0;
 }

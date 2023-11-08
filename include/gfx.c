@@ -79,8 +79,8 @@ EXPORT void ol_zoom(OlWindow win, int x, int y, int s)
 u8* ol_alloc(size_t size, int bpm)
 {
   if(size == 0)
-    return malloc(WIDTH * HEIGHT * (bpm/8));
-  return malloc(size * (bpm/8));
+    return (u8*)malloc(WIDTH * HEIGHT * (bpm/8));
+  return (u8*)malloc(size * (bpm/8));
 }
 
 EXPORT OlWindow ol_new_win()
@@ -89,7 +89,7 @@ EXPORT OlWindow ol_new_win()
   win.w = WIDTH;
   win.h = HEIGHT;
   win.mono = 0;
-  win.front = ol_alloc(WIDTH * HEIGHT, 32);
+  win.front = (u32*)ol_alloc(WIDTH * HEIGHT, 32);
   return win;
 }
 
@@ -252,7 +252,7 @@ void ol_load_ppm(char* fname, OlWindow* win)
   if(fgetc(fp) != 'P' || strcmp(fgetc(fp), "63"))
     return;
   unsigned int _newl = fgetc(fp), c = 0;
-  fscanf("%d %d %d\n", &(win->w), &(win->h), &_newl);
+  fscanf(fp, "%d %d %d\n", &(win->w), &(win->h), &_newl);
   for(int i = 0;i <= win->w * win->h;i++)
   {
     fread(win->front + c, 1, 3, fp);
@@ -320,7 +320,7 @@ void ol_triangle(OlWindow win, OlPoint p1, OlPoint p2, OlPoint p3)
 OlGlyph ol_load_glyph(char* fname, int w, int h)
 {
   OlGlyph p;
-  p.w = w, p.h = h, p.img = ol_alloc(w*h, 32);
+  p.w = w, p.h = h, p.img = (u32*)ol_alloc(w * h, 32);
   ol_load_file(fname, p.img);
   return p;
 }
@@ -329,11 +329,6 @@ void ol_draw_circle(OlWindow win, int x, int y, int r)
 {
   for(int i = 1;i <= 359;i+=3)
     win.front[(int)(r*cos(i)*win.w + r*sin(i))] = 1;
-}
-
-void ol_assign(FILE* fp, u8* ptr)
-{
-  setbuf(fp, ptr);
 }
 
 void ol_map_function(OlWindow win, float start, float end, float(*f)(float))

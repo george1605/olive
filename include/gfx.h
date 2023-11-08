@@ -18,7 +18,7 @@ typedef struct { uint16_t x, y; } OlPoint;
 static int WIDTH, HEIGHT, COLOR;
 
 typedef struct {
-  u32* front, back;
+  u32* front,* back;
   u32 w, h;
   int mono; // if is monochrome
 } OlWindow;

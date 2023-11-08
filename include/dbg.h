@@ -49,7 +49,7 @@ void ol_show_error(char* error)
 void ol_term_color(int c)
 {
     HANDLE hConsole = GetStdHandle(STD_OUTPUT_HANDLE);
-    SetConsoleTextAttribute(hConsole, FOREGROUND_RED);
+    SetConsoleTextAttribute(hConsole, (WORD)c);
 }
 
 uint64_t ol_mem_usage()
@@ -69,7 +69,6 @@ void ol_show_error(char* error)
         printf("[Error]: %i\n", errno);
     else
         printf("[Error]: %s\n", error);
-
 }
 
 /// may or may not work 
