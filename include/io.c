@@ -186,6 +186,65 @@ OlBuffer ol_lock_bufcreate(size_t size)
     return buf;
 }
 
+// memory page
+typedef struct {
+    void* ptr;
+    size_t size;
+    OlPage* next;
+} OlPage;
+
+// gets all the pages -> buffer
+OlBuffer ol_page_tobuf(OlPage* pages)
+{
+    OlBuffer buf;
+    OlPage* head = pages;
+    while(pages->next)
+    {
+        buf.size += page->size;
+        pages = pages->next;
+    }
+    buf.ptr = malloc(buf.size + 1);
+    while(head)
+    {
+        memcpy(buf.ptr, head->ptr, head->size);
+        head = head->next;
+        free(buf.ptr);
+    }
+    buf.crs = 0;
+    return buf;
+}
+
+// it reads pages from file till the end
+void ol_read_pages(OlPage* page, FILE* fp)
+{
+    size_t page_sz = page->size;
+    page->next = malloc(sizeof(OlPage));
+    page = page->next;
+    page->ptr = malloc(page_sz);
+    while(fread(page->ptr, 1, page_sz, fp))
+    {
+        page->size = page_sz;
+        page->next = malloc(sizeof(OlPage));
+        page = page->next;
+        page->ptr = malloc(page_sz);
+    }
+}
+
+void ol_buf_write(OlBuffer buf, char* x, FILE* fp)
+{
+    size_t sz = strlen(x);
+    if(buf.crs + sz > buf.size)
+    {
+        size_t p = buf.size - buf.crs;
+        size_t r = buf.crs + sz - buf.size;
+        memcpy(buf.ptr + buf.crs, x, p);
+        ol_bufflush(&buf, fp);
+        memcpy(buf.ptr, x, r);
+    } else {
+        memcpy(buf.ptr + buf.crs, x, sz);
+    }    
+}
+
 void ol_bufdelete(OlBuffer buf)
 {
     if(buf.lock.handle != NULL) 
@@ -249,6 +308,26 @@ OlDevice ol_find_dev(char* name)
     return OL_NULLDEV;
 }
 
+static void __ol_tmpread(OlDevice* dev, uint8_t* buf, size_t size)
+{
+    fread(buf, 1, size, dev->handle);
+}
+
+static void __ol_tmpwrite(OlDevice* dev, uint8_t* buf, size_t size)
+{
+    fwrite(buf, 1, size, dev->handle);
+}
+
+OlDevice ol_temp_dev()
+{
+    OlDevice dev;
+    dev.name = "tmp";
+    dev.handle = tmpfile();
+    dev.read = __ol_tmpread;
+    dev.write = __ol_tmpwrite;
+    return dev;
+}
+
 OlDevice ol_create_dev(char* name)
 {
     OlDevice dev;
@@ -270,6 +349,40 @@ OlDevice ol_open_dev(char* name, int opts)
     }
 }
 
+typedef struct
+{
+    OlDevice dev;
+    OlBuffer buf;
+} OlIOInfo;
+
+static void __ol_asread(void* f)
+{
+    OlDevice dev = ((OlIOInfo*)f)->dev;
+    OlDevice buf = ((OlIOInfo*)f)->buf;
+    dev.read(&dev, buf.ptr, buf.size);
+}
+
+static void __ol_aswrite(void* f)
+{
+    OlDevice dev = ((OlIOInfo*)f)->dev;
+    OlDevice buf = ((OlIOInfo*)f)->buf;
+    dev.write(&dev, buf.ptr, buf.size);
+}
+
+void ol_asread_dev(OlDevice dev, OlBuffer buf)
+{
+    OlIOInfo info = {.dev = dev, .buf = buf};
+    OlThread thread = ol_new_thread(__ol_asread, &info);
+    ol_wait_thread(thread);
+}
+
+void ol_aswrite_dev(OlDevice dev, OlBuffer buf)
+{
+    OlIOInfo info = {.dev = dev, .buf = buf};
+    OlThread thread = ol_new_thread(__ol_aswrite, &info);
+    ol_wait_thread(thread);
+}
+
 #ifdef _WIN32
 #include <windows.h>
 
@@ -284,6 +397,7 @@ HANDLE ol_open_com(int number)
     char buf[30];
     strcpy(buf, "\\\\.\\COM");
     buf[8] = (number + '0');
+    buf[9] = '\0';
     return CreateFileA(buf,
         GENERIC_READ,
         0,
@@ -335,8 +449,7 @@ static void __ol_usbwrite(OlDevice* dev, uint8_t* ptr, size_t size)
     ol_write_com(dev->handle, buf);
 }
 
-
-// to do this
+// Registers an USB Device using the Olive Device Interface
 void ol_register_usb(int number, OlCOMInfo info)
 {
     OlDevice dev;
@@ -347,6 +460,7 @@ void ol_register_usb(int number, OlCOMInfo info)
     ol_register_dev(dev);
 }
 
+// finds the device and closes the handle - must be done at the end of the program
 void ol_unregister_usb()
 {
     OlDevice dev = ol_find_dev("usb");
@@ -371,29 +485,65 @@ typedef struct {
     int other : 7;
 } OlTTYFlags;
 
-OlTTYDevice ol_open_tty(char* name, uint32_t baud)
+static char* __ol_ttypath = NULL;
+
+OlTTYDevice ol_open_tty(int number)
 {
     OlTTYDevice dev;
-    int fd = open(name, O_RDWR);
-    ttygetattr(fd, TCSANOW, &dev.ttyconfig);
-    cfsetospeed(&dev.ttyconfig, baud); // Change the baud rate as needed
-    cfsetispeed(&dev.ttyconfig, baud);
-    dev.ttyconfig.c_cflag |= CREAD;
-    ttysetaddr(fd, TCSANOW, &dev.ttyconfig);
+    if(!__ol_ttypath)
+        ol_set_ttypath(NULL);
+    char* name = strdup(__ol_ttypath);
+    name[strlen(name) - 1] = ((number % 10) + '0')
+    dev.fd = open(name, O_RDWR);
+    return dev;
+}
+
+void ol_set_ttypath(char* path)
+{
+    if(!path)
+        __ol_ttypath = "/dev/ttyUSB*";
+    else
+        __ol_ttypath = path; // like /dev/ttyS0 or smth
 }
 
 void ol_setflags_tty(OlTTYDevice* dev, OlTTYFlags flags)
 {
+    ttygetattr(fd, TCSANOW, &(dev.config));
+    cfsetospeed(&dev.ttyconfig, flags.baud); // Change the baud rate as needed
+    cfsetispeed(&dev.ttyconfig, flags.baud);
     if(flags.parity)
         dev->tty_config.c_cflag |= PARENB;
     else
         dev->tty_config.c_cflag &= ~PARENB;
     dev->tty_config.c_cflag |= flags.attr;
+    ttysetattr(fd, TCSANOW, &(dev.config));
 }
 
 void ol_write_tty(OlTTYDevice dev, char* buffer)
 {
     write(dev.fd, buffer, strlen(buffer));
+}
+
+void __ol_write_tty(OlTTYDevice dev, uint8_t* buf, size_t size)
+{
+    write(dev.fd, buf, size);
+}
+
+void __ol_read_tty(OlTTYDevice dev, uint8_t* buf, size_t size)
+{
+    read(dev.fd, buf, size);
+}
+
+void ol_register_usb(int number, OlTTYFlags flags)
+{
+    OlTTYDevice tty = ol_open_tty("/dev/tty0");
+    ol_setflags_tty(&tty, flags);
+    OlDevice dev;
+    dev.name = "usb";
+    dev.handle = tty.fd;
+    dev.read = __ol_read_tty;
+    dev.write = __ol_write_tty;
+    ol_register_dev(dev);
 }
 #endif
 

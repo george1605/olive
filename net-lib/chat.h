@@ -15,19 +15,29 @@ typedef struct {
     OlClient clients[OL_MAX_CLIENTS];
     size_t nr_clients;
     void* serv_socket;
-} OlServer;
+} OlChatServer;
 
 void ol_remove_client(OlClient* client)
 {
     ol_net_close(client->socket);
 }
 
-void ol_broadcast(OlServer server, char* msg)
+void ol_broadcast(OlChatServer server, char* msg)
 {
     for(int i = 0;i < server.nr_clients;i++)
     {
         if(server.clients[i].socket != NULL)
             ol_net_send(server.clients[i].socket, msg, strlen(msg));
+    }
+}
+
+void ol_chat_cleanup(OlChatServer server)
+{
+    ol_net_close(server.serv_socket);
+    for(int i = 0;i < server.nr_clients;i++)
+    {
+        if(server.clients[i].socket != NULL)
+            ol_net_close(server.clients[i].socket);
     }
 }
 

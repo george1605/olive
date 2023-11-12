@@ -28,6 +28,42 @@ typedef struct _binstring {
     size_t size;
 } binstring;
 
+/*
+* use this instead of the STR() macro if you want
+* to use ol_str_append() (stored on the heap)
+*/
+string ol_str_make(char* p)
+{
+    string x;
+    x.size = strlen(p);
+    x.ptr = (char*)malloc(x.size + 1);
+    strcpy(x.ptr, p);
+    x.ptr[x.size - 1] = '\0'; // keep it safe
+    return x;
+}
+
+/*
+* Checks if the string is valid(is not NULL and has '\0' at size - 1)
+*/
+int ol_str_valid(string str, int maxlen)
+{
+    if(str.ptr == NULL)
+        return 0;
+    if(str.ptr[str.size - 1] != NULL) // same as checking strlen(str.ptr) == str.size
+            return 0;
+    if(maxlen)
+        if(strlen(str.ptr) > maxlen)
+            return 0;
+    return 1;
+}
+
+// resizes and appends str2 -> str1
+void ol_str_append(string str1, string str2)
+{
+    str1.ptr = realloc(str1.ptr, str1.size + str2.size);
+    strcat(str1.ptr, str2.ptr);
+}
+
 char ol_check_magic(binstring str, int magic)
 {
     return memcmp(str.ptr, magic_list[magic], str.size);
@@ -70,13 +106,6 @@ void ol_whitespaces(string arg, int* pos)
 int ol_str_includes(string str, string substr)
 {
     return (strstr(str.ptr, substr.ptr) != NULL);
-}
-
-char ol_str_valid(string input)
-{
-    if(input.ptr == NULL)
-        return 0;
-    return (strlen(input.ptr) == input.size);
 }
 
 size_t ol_str_first(string arg, char c)

@@ -249,7 +249,7 @@ EXPORT void ol_quad_bezier(OlWindow win, OlPoint points[3])
 void ol_load_ppm(char* fname, OlWindow* win)
 {
   FILE* fp = fopen(fname, "r");
-  if(fgetc(fp) != 'P' || strcmp(fgetc(fp), "63"))
+  if(fgetc(fp) != 'P')
     return;
   unsigned int _newl = fgetc(fp), c = 0;
   fscanf(fp, "%d %d %d\n", &(win->w), &(win->h), &_newl);

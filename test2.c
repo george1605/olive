@@ -1,7 +1,7 @@
-#include "include/visualise.h"
+#include "include/str.h"
 
 int main()
 {
-    OlWindow win = ol_visual_file("olive.exe");
-    ol_save_ppm("main.ppm", win);
+    string str1 = ol_str_make("Wha's that?");
+    printf("%s", str1.ptr);
 }

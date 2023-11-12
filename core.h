@@ -1,6 +1,7 @@
 #include <stdio.h>
 #include <io.h>
 #include <fcntl.h>
+#include <malloc.h>
 #ifdef _WIN32
 #include <windows.h>
 #else
@@ -85,6 +86,12 @@ typedef struct
     void(*main)(OlPlatform, OlArgs);
 } OlApp;
 
+typedef struct
+{
+    char* path; // using getcwd()
+    char* os;
+} OlSysInfo;
+
 void ol_setupvid_platform(OlPlatform* platform, int w, int h)
 {
     if(platform->video_handle != NULL) return;
@@ -92,6 +99,21 @@ void ol_setupvid_platform(OlPlatform* platform, int w, int h)
     win->front = (u32*)malloc(4 * w * h);
     win->w = w, win->h = h;
     platform->video_handle = win;
+}
+
+void ol_getsys_platorm(OlPlatform* platform)
+{
+    OlSysInfo* info = malloc(sizeof(OlSysInfo));
+#ifdef _WIN32
+    info->os = "Windows";
+#elif defined(__linux__)
+    info->os = "Linux";
+#elif defined(__APPLE__)
+    info->os = "macOS";
+#else
+    info->os = "Unknown";
+#endif
+    platform->sys_handle = info;
 }
 
 void ol_freevid_platform(OlPlatform platform)

@@ -19,5 +19,5 @@ void ol_android_win()
 }
 
 #elif defined(__APPLE__)
-
+// TO DO: Add APPLE specific functions
 #endif

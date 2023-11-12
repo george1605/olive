@@ -1,8 +1,6 @@
 #ifndef __OL_SDL__
 #define __OL_SDL__
 #define SDL_MAIN_HANDLED
-#include <SDL2/SDL.h>
-#include <SDL2/SDL_timer.h>
 #include <stdio.h>
 #include <stdint.h>
 #include "../include/gfx.c"
@@ -14,7 +12,7 @@
 */
 void ol_sdl_init()
 {
-    if(!SDL_Init(SDL_INIT_EVERYTHING))
+    if(SDL_Init(SDL_INIT_EVERYTHING))
         {
             printf("Could not init.Error=%s", SDL_GetError());
             exit(-1);
@@ -34,6 +32,44 @@ void ol_sdl_render(OlPanel panel, OlWindow win)
     SDL_RenderClear(renderer);
     SDL_RenderCopy(renderer, texture, NULL, NULL);
     SDL_RenderPresent(renderer);
+}
+
+typedef struct {
+    SDL_Joystick* handle;
+    SDL_JoystickID id;
+} OlJoystick;
+
+#define OL_NULL_JOYSTICK (OlJoystick){.handle = NULL}
+
+OlJoystick ol_sdl_openjoystick(int num)
+{
+    int joys = SDL_NumJoysticks();
+    if(joys == 0 || num > joys)
+    {
+        return OL_NULL_JOYSTICK;
+    }
+    OlJoystick stick;
+    SDL_JoystickEventState(SDL_ENABLE);
+    stick.handle = SDL_JoystickOpen(num);
+    stick.id = num;
+    return stick;
+}
+
+SDL_Renderer* ol_sdl_renderer(OlPanel panel)
+{
+    return SDL_CreateRenderer(panel.win, -1, SDL_RENDERER_ACCELERATED);
+}
+
+void ol_sdl_clear(SDL_Renderer* renderer, OlColor col)
+{
+    SDL_SetRenderDrawColor( renderer, col.r, col.g, col.b, 255 );
+    SDL_RenderClear( renderer );
+}
+
+void ol_sdl_cleanup()
+{
+    SDL_StopTextInput();
+    SDL_Quit();
 }
 
 OlPanel ol_sdl_new(const char* title, int w, int h, uint32_t flags)
@@ -57,4 +93,18 @@ int ol_closed(OlPanel panel)
     SDL_PollEvent(&event);
     return (event.type != SDL_QUIT);
 }
+
+#ifdef _WIN32
+#include <windows.h>
+
+HWND ol_sdl_tohwnd(SDL_Window* win)
+{
+    SDL_SysWMinfo wmInfo;
+    SDL_VERSION(&wmInfo.version);
+    SDL_GetWindowWMInfo(win, &wmInfo);
+    return wmInfo.info.win.window;
+}
+
+#endif
+
 #endif
