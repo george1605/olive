@@ -100,11 +100,15 @@ int ol_bsd_newqueue()
 
 #endif
 
+/*
+Exmaple code below
+
 int main()
 {
     ol_setup(200, 200);
     OlWindow win = ol_new_win();
     OlMsgQueue* queue = ol_new_queue(OL_QUEUE_SIZE);
+    queue->error = 0;
     ol_enqueue(queue, ol_def_handler, NULL, &win);
     while(!ol_queue_empty(queue))
     {
@@ -114,3 +118,4 @@ int main()
     }
     ol_free_queue(queue);
 }
+*/

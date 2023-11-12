@@ -2,7 +2,7 @@
 #define OLIVEGL_H_INCLUDED
 
 #include <GL/gl.h>
-#include "../include/gfx.h"
+#include "../include/gfx.c" // changed it to the .c extension
 
 void ol_scale(GLfloat vertices[], float x, int length)
 {

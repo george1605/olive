@@ -1,6 +1,7 @@
 /*
 *   IO.C Source File
-*   Contains functions regarding file information, buffers, devices and TTY/COM(USB) communication
+*   Contains functions regarding file information, buffers, devices and TTY/COM(USB) communication,
+*   pipes and more IO related functions
 *   Under Open Source License
 */
 #ifndef __OLIVE_IO__
@@ -11,6 +12,7 @@
 #include <stdint.h>
 #include <stdlib.h>
 #include <stdio.h>
+#include <io.h>
 #include "thread.h"
 #define OL_DEVFIND 0x10 // used by ol_open_dev() - finds device
 #define OL_DEVNEW  0x20 // used by ol_open_dev() - creates new device
@@ -29,10 +31,10 @@ typedef struct _OlDevice {
     void(*write)(struct _OlDevice*, uint8_t*, size_t);
 } OlDevice;
 
-typedef struct {
+typedef struct _OlIOContext {
     OlTask* tasks;
     size_t number, size;
-    int(*check)(OlIOContext*);
+    int(*check)(struct _OlIOContext*);
 } OlIOContext;
 
 OlIOContext ol_new_context(size_t size)
@@ -79,12 +81,37 @@ typedef struct
 } OlBuffer;
 
 typedef struct {
+    void* handles[2];
+    char* name; // NULL for unnamed Pipes
+} OlPipe;
+
+typedef struct {
     char* name;
     void* handle;
     uint8_t* buffer;
     void(*read)(uint8_t*, size_t);
     void(*write)(uint8_t*, size_t);
 } OlBufDevice; // buffered device
+
+// un-named pipes
+OlPipe ol_new_pipe(FILE* file1, FILE* file2)
+{
+    OlPipe pipe;
+    pipe.name = NULL;
+    pipe.handles[0] = file1;
+    pipe.handles[1] = file2;
+#ifdef __linux__
+    int fds[2];
+    fds[0] = fileno(file1);
+    fds[1] = fileno(file2);
+    pipe(fds);
+#elif defined(_WIN32)
+    HANDLE read = (HANDLE)_get_osfhandle(_fileno(file1));
+    HANDLE write = (HANDLE)_get_osfhandle(_fileno(file2));
+    CreatePipe(read, write, NULL, 512);
+#endif
+    return pipe;
+}
 
 void ol_get_fileinfo(char* path, OlFileInfo* pInfo)
 {
@@ -124,7 +151,7 @@ void ol_lock_bufread(OlBuffer* buf, FILE* fp)
 void ol_bufget(OlBuffer* buf, OlDevice dev)
 {
     if(dev.read != NULL)
-        dev.read(&dev, buf->ptr, buf->size);
+        dev.read(&dev, buf->ptr + buf->crs, buf->size);
 }
 
 void ol_bufset(OlBuffer buf, FILE* stream)
@@ -187,10 +214,10 @@ OlBuffer ol_lock_bufcreate(size_t size)
 }
 
 // memory page
-typedef struct {
+typedef struct _OlPage {
     void* ptr;
     size_t size;
-    OlPage* next;
+    struct _OlPage* next;
 } OlPage;
 
 // gets all the pages -> buffer
@@ -200,7 +227,7 @@ OlBuffer ol_page_tobuf(OlPage* pages)
     OlPage* head = pages;
     while(pages->next)
     {
-        buf.size += page->size;
+        buf.size += pages->size;
         pages = pages->next;
     }
     buf.ptr = malloc(buf.size + 1);
@@ -258,13 +285,15 @@ typedef struct _OlModule {
     void(*exit)(struct _OlModule*);
 } OlModule;
 
+typedef void(*OlModFunc)(OlModule*);
+
 OlModule ol_read_module(char* fname)
 {
     OlModule mod;
     #ifdef _WIN32
         HANDLE hnd = LoadLibraryA(fname);
-        mod.init = GetProcAddress(hnd, "ol_init");
-        mod.exit = GetProcAddress(hnd, "ol_exit");
+        mod.init = (OlModFunc)GetProcAddress(hnd, "ol_init");
+        mod.exit = (OlModFunc)GetProcAddress(hnd, "ol_exit");
         mod.handle = hnd;
     #elif defined(__linux__)
         mod.handle = dlopen(fname, RTLD_NOW);
@@ -358,28 +387,28 @@ typedef struct
 static void __ol_asread(void* f)
 {
     OlDevice dev = ((OlIOInfo*)f)->dev;
-    OlDevice buf = ((OlIOInfo*)f)->buf;
+    OlBuffer buf = ((OlIOInfo*)f)->buf;
     dev.read(&dev, buf.ptr, buf.size);
 }
 
 static void __ol_aswrite(void* f)
 {
     OlDevice dev = ((OlIOInfo*)f)->dev;
-    OlDevice buf = ((OlIOInfo*)f)->buf;
+    OlBuffer buf = ((OlIOInfo*)f)->buf;
     dev.write(&dev, buf.ptr, buf.size);
 }
 
 void ol_asread_dev(OlDevice dev, OlBuffer buf)
 {
     OlIOInfo info = {.dev = dev, .buf = buf};
-    OlThread thread = ol_new_thread(__ol_asread, &info);
+    OlThread thread = ol_new_thread((threadf)__ol_asread, &info);
     ol_wait_thread(thread);
 }
 
 void ol_aswrite_dev(OlDevice dev, OlBuffer buf)
 {
     OlIOInfo info = {.dev = dev, .buf = buf};
-    OlThread thread = ol_new_thread(__ol_aswrite, &info);
+    OlThread thread = ol_new_thread((threadf)__ol_aswrite, &info);
     ol_wait_thread(thread);
 }
 
@@ -429,7 +458,7 @@ void ol_read_com(HANDLE hnd, OlBuffer buf)
 void ol_write_com(HANDLE hnd, OlBuffer buf)
 {
     int bytesWritten;
-    WriteFile(hnd, buf.ptr, buf.size, &bytesWritten, NULL);
+    WriteFile(hnd, buf.ptr, buf.size, (LPDWORD)&bytesWritten, NULL);
     // assert(bytesWritten == buf.size)
 }
 

@@ -1,6 +1,11 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include "gfx.h"
+#ifdef _WIN32
+#include <windows.h>
+#elif defined(__linux__)
+#include <unistd.h>
+#endif
 
 #define OL_ENOENT     0x1 // no entity, similar to E_NOENT
 #define OL_EBADFD     0x2 // bad file descriptor
@@ -24,9 +29,14 @@ int ol_check_win(OlWindow win)
     return x;
 }
 
-void ol_check_dim(OlWindow win, int flags)
+int ol_check_dim(OlWindow win)
 {
-
+#ifdef _WIN32
+#include <windows.h>
+    int w = GetSystemMetrics(SM_CXSCREEN);
+    int h = GetSystemMetrics(SM_CYSCREEN);
+    return (win.w < w || win.h < h);
+#endif
 }
 
 void* ol_check_file(FILE* fp)
