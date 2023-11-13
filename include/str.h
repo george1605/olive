@@ -4,6 +4,7 @@
 #include <stdlib.h>
 #include <memory.h>
 #include <stdint.h>
+#include <string.h>
 #include <stdio.h>
 #include <math.h>
 #define ELF_MAGIC 0

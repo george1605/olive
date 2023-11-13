@@ -7,18 +7,35 @@
 #include <unistd.h>
 #endif
 
-#define OL_ENOENT     0x1 // no entity, similar to E_NOENT
-#define OL_EBADFD     0x2 // bad file descriptor
-#define OL_ENULLP     0x4 // null pointer, if win.front == NULL
-#define OL_EWIDTH     0x8 // width > uint16_t max or width == 0
-#define OL_EHEIGHT    0x10 // same as OL_EWIDTH
-#define OL_EBUFOVER   0x20 // buffer overflow
-#define OL_ENOXDISP   0x40 // no X11 display, it is null
-#define OL_ENETWSA    0x80 // winsock WSA error at init
+#define OL_ENOENT       0x1 // no entity, similar to E_NOENT
+#define OL_EBADFD       0x2 // bad file descriptor (or FILE* fp is NULL)
+#define OL_ENULLP       0x4 // null pointer, if win.front == NULL
+#define OL_EWIDTH       0x8 // width > uint16_t max or width == 0
+#define OL_EHEIGHT      0x10 // same as OL_EWIDTH
+#define OL_EBUFOVER     0x20 // buffer overflow
+#define OL_ENOXDISP     0x40 // no X11 display, it is null
+#define OL_ENETWSA      0x80 // winsock WSA error at init
+#define OL_EANDRWINLOCK 0x100 // android ANativeWindow_lock() failed
 
 #define OL_SCRNDIM   0x10 // checks if dimensions > screen w or h
 #define OL_UINTMAX   0x20 // checks if is bigger than 65000
 int ol_error = 0;
+
+/*
+ * Checks the ol_error variable and calls a handle function
+ */
+void ol_check_err(void(*handle)(int code))
+{
+    if(ol_error != 0)
+    {
+        if(handle != NULL)
+            handle(ol_error);
+        else {
+            printf("Olive error: %i", ol_error);
+            exit(-1);
+        }
+    }
+}
 
 int ol_check_win(OlWindow win)
 {
