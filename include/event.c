@@ -1,10 +1,15 @@
 #include <stdio.h>
 #include <malloc.h>
 #include "gfx.c"
+#include "snd.c"
 #define OL_QUEUE_SIZE   0x20
 #define OL_EVCLEAR      0x0 // or fill
 #define OL_EVMEMCHANGED 0x1 // if front buffer is changed this event will be triggered
 #define OL_EVSENDSND    0x2
+#define OL_EVSDLCREATE  0x4
+#ifdef _USE_SDL_
+#include "../sdl/ol.h"
+#endif
 
 typedef struct _Msg
 {
@@ -51,13 +56,41 @@ void ol_free_queue(OlMsgQueue* queue)
     free(queue);
 }
 
+/*
+ * The default event handling function. If event.processor == NULL, this function is called
+ */
+void ol_handle_event(OlMsg event)
+{
+    switch(event.flags)
+    {
+        case OL_EVCLEAR:
+            if(event.target == NULL || event.data == NULL) { break; }
+            ol_fill(*(OlWindow*)(event.target), *(uint32_t*)(event.data));
+            break;
+        case OL_EVSENDSND:
+            ol_play_buffer(*(OlSoundBuffer*)(event.data));
+            break;
+#ifdef _USE_SDL_
+        // TO ADD SDLCREATE HANDLER!
+        case OL_SDLCREATE:
+            break;
+#endif
+        default:
+            printf("Unknown event: %i", event.flags);
+            break;
+    }
+}
+
 // queue.pop() and elem.processor(elem)
 void ol_process_event(OlMsgQueue* queue)
 {
     OlMsg msg = queue->ptr[queue->front];
     queue->front = (queue->front + 1) % queue->capacity;
     queue->size--;
-    msg.processor(msg);
+    if(msg.processor == NULL)
+        ol_handle_event(msg);
+    else
+        msg.processor(msg);
 }
 
 void ol_enqueue(OlMsgQueue* queue, void (*function)(OlMsg), void* data, void* target) 
@@ -98,6 +131,23 @@ int ol_bsd_newqueue()
     return kq;
 }
 
+// Monitor events from filedesc
+void ol_bsd_setqueue(int fd, int flags, int kq)
+{
+    struct kevent event;
+    if(flags == 0) flags = EV_ADD | EV_CLEAR;
+    EV_SET(&event, fd, EVFILT_VNODE, flags, NOTE_WRITE,
+	       0, NULL);
+    kevent(kq, &event, 1, NULL, 0,	NULL);
+}
+
+struct event ol_bsd_nextev(int kq)
+{
+    struct event tevent;
+    kevent(kq,	NULL, 0, &tevent, 1, NULL);
+    return tevent;
+}
+
 #endif
 
 /*
@@ -117,5 +167,7 @@ int main()
         ol_process_event(queue);
     }
     ol_free_queue(queue);
+    ol_save_ppm("main.ppm", win);
+    free(win.front);
 }
 */

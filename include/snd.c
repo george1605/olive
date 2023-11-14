@@ -2,6 +2,15 @@
 #define __SOUND__
 #include <stdint.h>
 
+typedef struct {
+    void* bytes;
+    size_t size;
+    size_t bytes_per_sec;
+    size_t sample_size; // in bits
+} OlSoundBuffer;
+
+void ol_play_buffer(OlSoundBuffer buf); // various implementations below
+
 #ifdef _WIN32
 #include <windows.h>
 #include <mmreg.h>
