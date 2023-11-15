@@ -66,4 +66,14 @@ void ol_android_unlock(ANativeWindow* win)
 
 #elif defined(__APPLE__)
 // TO DO: Add APPLE specific functions
+#include <Cocoa/Cocoa.h>
+
+NSWindow* ol_cocoa_window(SDL_Window* win)
+{
+    SDL_SysWMinfo wmInfo;
+    SDL_VERSION(&wmInfo.version);
+    SDL_GetWindowWMInfo(win, &wmInfo);
+    return wmInfo.info.cocoa.window;
+}
+
 #endif

@@ -122,6 +122,27 @@ void ol_def_handler(OlMsg msg)
 }
 
 #ifdef __FreeBSD__
+#include <sys/event.h>
+#include <err.h>
+#include <fcntl.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+
+typedef struct
+{
+    struct kevent* listen;
+    struct kevent* triggered;
+} OlBsdQueue;
+
+void ol_bsd_checkev(struct kevent ev)
+{
+    if(ev.flags & EV_ERROR)
+    {
+            errx(EXIT_FAILURE, "Event error: %s", strerror(event.data));
+    }
+}
+
 int ol_bsd_newqueue()
 {
     kq = kqueue();
@@ -139,6 +160,14 @@ void ol_bsd_setqueue(int fd, int flags, int kq)
     EV_SET(&event, fd, EVFILT_VNODE, flags, NOTE_WRITE,
 	       0, NULL);
     kevent(kq, &event, 1, NULL, 0,	NULL);
+}
+
+OlBsdQueue ol_bsd_initqueue(size_t numEvents)
+{
+    OlBsdQueue q;
+    q.listen = malloc(numEvents * sizeof(struct kevent));
+    q.triggered = malloc(numEvents * sizeof(struct kevent)); // they are different
+    return q;
 }
 
 struct event ol_bsd_nextev(int kq)
