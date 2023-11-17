@@ -1,23 +1,66 @@
 #ifndef __SOUND__
 #define __SOUND__
 #include <stdint.h>
+#include <stdlib.h>
+#include <math.h>
+#include <stdio.h>
+
+typedef struct {
+    char     riff[4];        // "RIFF" constant
+    uint32_t fileSize;       // Size of the entire file minus 8 bytes
+    char     wave[4];        // "WAVE" constant
+    char     fmt[4];         // "fmt " constant
+    uint32_t fmt_size;        // Size of the format chunk (16 bytes for PCM)
+    uint16_t audio_format;    // Audio format (1 for PCM)
+    uint16_t num_channels;    // Number of audio channels (1 for mono, 2 for stereo)
+    uint32_t sample_rate;     // Sample rate (e.g., 44100 Hz)
+    uint32_t byte_rate;       // Byte rate (SampleRate * NumChannels * BitsPerSample / 8)
+    uint16_t block_align;     // Block align (NumChannels * BitsPerSample / 8)
+    uint16_t sample_size;  // Bits per sample (e.g., 16 bits)
+    char     data[4];        // "data" constant
+    uint32_t data_size;       // Size of the data chunk
+} OlWavHead;
 
 typedef struct {
     void* bytes;
     size_t size;
-    size_t bytes_per_sec;
-    size_t sample_size; // in bits
+    OlWavHead info;
 } OlSoundBuffer;
 
 void ol_play_buffer(OlSoundBuffer buf); // various implementations below
 
+int ol_loadsnd_buffer(char* fname, OlSoundBuffer* buf)
+{
+    FILE* fp = fopen(fname, "rb");
+    OlWavHead head;
+    fread(&head, 1, sizeof(OlWavHead), fp);
+    if(head.audio_format != 1)
+    {
+        fclose(fp);
+        return -1;
+    }
+    buf->bytes = malloc(head.data_size);
+    buf->size = head.data_size;
+    buf->info = head;
+    fread(buf->bytes, head.data_size, 1, fp);
+    fclose(fp);
+}
+
+void ol_play_wav(char* fname) {
+    OlSoundBuffer buf;
+    ol_loadsnd_buffer(fname, &buf);
+    if(buf.size == 0) return;
+    ol_play_buffer(buf);
+    free(buf.bytes);
+}
+
 #ifdef _WIN32
 #include <windows.h>
 #include <mmreg.h>
+#include <mmsystem.h>
 #define BASE_FREQ 44100
 #define SAMPLE_RATE 11025
 #define BSIZE 4096
-#define M_PI 3.1415926
 
 WAVEFORMATEX ol_waveformat(int freq, int chann)
 {
@@ -29,6 +72,38 @@ WAVEFORMATEX ol_waveformat(int freq, int chann)
     w.wBitsPerSample = 16;
     w.wFormatTag = WAVE_FORMAT_PCM;
     return w;
+}
+
+HWAVEOUT ol_wave_opendev(WAVEFORMATEX*  w)
+{
+    HWAVEOUT hWaveOut;
+    waveOutOpen(NULL, WAVE_MAPPER, w, 0, 0, WAVE_FORMAT_QUERY);
+    waveOutOpen(&hWaveOut, WAVE_MAPPER, w, 0, 0, CALLBACK_NULL);
+    return hWaveOut;
+}
+
+/*
+ * Windows implementation of ol_play_buffer
+ */
+void ol_play_buffer(OlSoundBuffer buf) {
+    WAVEFORMATEX w;
+    w.nChannels = buf.info.num_channels;
+    w.nAvgBytesPerSec = buf.info.byte_rate;
+    w.wFormatTag = WAVE_FORMAT_PCM;
+    w.wBitsPerSample = buf.info.sample_rate;
+    w.nBlockAlign = buf.info.block_align;
+    HWAVEOUT dev = ol_wave_opendev(&w);
+
+    WAVEHDR waveHeader;
+    waveHeader.lpData = (LPSTR)buf.bytes;
+    waveHeader.dwBufferLength = buf.size;
+    waveHeader.dwBytesRecorded = 0;
+    waveHeader.dwUser = 0;
+    waveHeader.dwFlags = 0;
+    waveHeader.dwLoops = 0;
+    waveOutPrepareHeader(dev, &waveHeader, sizeof(WAVEHDR));
+    waveOutWrite(dev, &waveHeader, sizeof(WAVEHDR));
+    waveOutUnprepareHeader(dev, &waveHeader, sizeof(WAVEHDR));
 }
 
 WAVEHDR ol_wavehdr(uint16_t * data)

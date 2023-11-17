@@ -1,6 +1,12 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <stdint.h>
+#include <setjmp.h> // for error handling - taken from http://groups.di.unipi.it/~nids/docs/longjump_try_trow_catch.html
+#define ERRBUF() jmp_buf __err_buf
+#define THROW(x) longjmp(__err_buf, x)
+#define CATCH(x) break; case x:
+#define TRY do{ ERRBUF(); switch( setjmp(__err_buf) ){ case 0:
+#define ENDTRY break; }}} while(0)
 
 #define expect(thing, tests, fails) do { \
                 tests++; \
