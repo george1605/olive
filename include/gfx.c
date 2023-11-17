@@ -2,10 +2,17 @@
 #ifndef RGB
 #define RGB(r,g,b) (r | (g << 8) | (b << 16))
 #endif
+#ifndef CMYK
+#define CMYK(c, m, y, k) \
+    (((255 - (c)) << 24) | ((255 - (m)) << 16) | ((255 - (y)) << 8) | (255 - (k)))
+#endif
 #define GETBYTE(x, y) (x >> (8 * y)) & 0xFF
 #define RED RGB(255,0,0)
 #define BLUE RGB(0,0,255)
 #define GREEN RGB(0,255,0)
+#define YELLOW RGB(255, 255, 0)
+#define CYAN RGB(0, 255, 255)
+#define MAGENTA RGB(255, 0, 255)
 #define WHITE RGB(255,255,255)
 
 inline void ol_fastswap(u8* ptr1, u8* ptr2)
@@ -36,14 +43,21 @@ EXPORT void ol_fill(OlWindow win, u32 color)
   }
 }
 
+EXPORT void ol_set_pixel(u32* ptr, int x, int y, int color)
+{
+    ptr[y*WIDTH+x] = color;
+}
+
 EXPORT void ol_setwin(OlWindow win, int x, int y, int color)
 {
   int c;
   if(win.mono)
    {
       c = y * win.w + x;
-      win.front[c/8] |= 1 << (c%8);
-   }
+      win.front[c / 8] |= (1 << (c % 8));
+   } else {
+      win.front[y * win.w + x] = color;
+  }
 }
 
 EXPORT void ol_setup(int x, int y)
@@ -54,11 +68,6 @@ EXPORT void ol_setup(int x, int y)
     HEIGHT = 320;
   else
     WIDTH = x, HEIGHT = y;
-}
-
-EXPORT void ol_set_pixel(u32* ptr, int x, int y, int color)
-{
-  ptr[y*WIDTH+x] = color;
 }
 
 EXPORT void ol_draw_rect(u32* ptr, int x, int y, int w, int h)
@@ -91,6 +100,20 @@ EXPORT OlWindow ol_new_win()
   win.mono = 0;
   win.front = (u32*)ol_alloc(WIDTH * HEIGHT, 32);
   return win;
+}
+
+/*
+ * New API, it does not use global vars HEIGHT and WIDTH
+ * ol_setup() does not need to be called
+ */
+EXPORT OlWindow ol_create_win(int w, int h)
+{
+    OlWindow win;
+    win.w = w;
+    win.h = h;
+    win.mono = 0;
+    win.front = (u32*)ol_alloc(w * h, 32);
+    return win;
 }
 
 EXPORT void ol_save_file(char* fname, u32* ptr)

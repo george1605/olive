@@ -2,7 +2,58 @@
 #ifdef _WIN32
 #include <windows.h>
 #else
-#error "Not an Win32 Platform!"
+#endif
+
+#ifdef _USE_LEGACYGFX_ // only for legacy codebases (USE SDL/SFML/ETC. FOR MODERN APPS)
+#include <graphics.h>
+#define OL_WAITKEY() while(!kbhit())
+/*
+ * Returns coordinates of mouse click, or (0, 0) if no such
+ * event occured.
+ */
+OlPoint ol_bgi_getclick()
+{
+    int x = 0, y = 0;
+    if(ismouseclick(WM_LBUTTONDOWN))
+    {
+            getmouseclick(WM_LBUTTONDOWN, &x, &y);
+    }
+    OlPoint point;
+    point.x = x;
+    point.y = y;
+    return point;
+}
+
+OlPoint ol_bgi_waitclick()
+{
+    while(!ismouseclick(WM_LBUTTONDOWN))
+    {
+            delay(500);
+    }
+    OlPoint point;
+    getmouseclick(WM_LBUTTONDOWN, &(point.x), &(point.y));
+    return point;
+}
+
+void ol_bgi_display(OlWindow win)
+{
+    putimage(0, 0, win.front, COPY_PUT);
+}
+
+OlWindow ol_bgi_capture(int x, int y, int w, int h)
+{
+    OlWindow win;
+    win.front = malloc(32 * w * h);
+    win.w = w;
+    win.h = h;
+    getimage(x, y, x + w, y + h, win.front);
+    return win;
+}
+
+OlWindow ol_bgi_captureall()
+{
+    return ol_bgi_capture(0, 0, getmaxx(), getmaxy());
+}
 #endif
 
 HBITMAP ol_win_flush(OlWindow ol, HDC dc)

@@ -6,6 +6,12 @@
 #include "linsock.h"
 #endif
 
+typedef struct
+{
+    char* name;
+    void* handle;
+} OlWifiDevice;
+
 void ol_net_setup()
 {
     #ifdef _WIN32
@@ -15,6 +21,9 @@ void ol_net_setup()
 
     #endif
 }
+
+void ol_wifi_enumdev(OlWifiDevice* devices, size_t number);
+void ol_wifi_connect(OlWifiDevice dev);
 
 void ol_net_send(void*, uint8_t*, size_t);
 void ol_net_recv(void*, uint8_t*, size_t);
