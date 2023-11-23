@@ -1,3 +1,5 @@
+#ifndef __GFX_C__
+#define __GFX_C__
 #include "gfx.h"
 #ifndef RGB
 #define RGB(r,g,b) (r | (g << 8) | (b << 16))
@@ -359,3 +361,5 @@ void ol_map_function(OlWindow win, float start, float end, float(*f)(float))
     for(int i = start;i <= end;i++)
         win.front[(int)(f(i) * win.w + i)] = COLOR; 
 }
+
+#endif

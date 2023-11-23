@@ -1,5 +1,5 @@
-#ifndef __SOUND__
-#define __SOUND__
+#ifndef SOUND_
+#define SOUND_
 #include <stdint.h>
 #include <stdlib.h>
 #include <math.h>
@@ -34,24 +34,26 @@ int ol_loadsnd_buffer(char* fname, OlSoundBuffer* buf)
     FILE* fp = fopen(fname, "rb");
     OlWavHead head;
     fread(&head, 1, sizeof(OlWavHead), fp);
-    if(head.audio_format != 1)
+    /*if(head.audio_format < 1)
     {
         fclose(fp);
         return -1;
-    }
+    }*/
     buf->bytes = malloc(head.data_size);
     buf->size = head.data_size;
     buf->info = head;
     fread(buf->bytes, head.data_size, 1, fp);
     fclose(fp);
+    return 0;
 }
 
-void ol_play_wav(char* fname) {
+int ol_play_wav(char* fname) {
     OlSoundBuffer buf;
-    ol_loadsnd_buffer(fname, &buf);
-    if(buf.size == 0) return;
+    if(ol_loadsnd_buffer(fname, &buf) == -1)
+        return -1;
     ol_play_buffer(buf);
     free(buf.bytes);
+    return 0;
 }
 
 #ifdef _WIN32

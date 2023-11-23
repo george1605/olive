@@ -54,6 +54,14 @@ OlWindow ol_bgi_captureall()
 {
     return ol_bgi_capture(0, 0, getmaxx(), getmaxy());
 }
+
+void ol_bgi_doublebuf(void(*draw)())
+{
+    setactivepage(0);
+    cleardevice();
+    draw(); // performs a draw function
+    setvisualpage(1 - getvisualpage());
+}
 #endif
 
 HBITMAP ol_win_flush(OlWindow ol, HDC dc)

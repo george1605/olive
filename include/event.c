@@ -1,7 +1,9 @@
 #include <stdio.h>
 #include <malloc.h>
 #include "gfx.c"
+#ifdef _USE_SND_
 #include "snd.c"
+#endif
 #define OL_QUEUE_SIZE   0x20
 #define OL_EVCLEAR      0x0 // or fill
 #define OL_EVMEMCHANGED 0x1 // if front buffer is changed this event will be triggered
@@ -67,9 +69,12 @@ void ol_handle_event(OlMsg event)
             if(event.target == NULL || event.data == NULL) { break; }
             ol_fill(*(OlWindow*)(event.target), *(uint32_t*)(event.data));
             break;
+#ifdef _USE_SND_
         case OL_EVSENDSND:
             ol_play_buffer(*(OlSoundBuffer*)(event.data));
             break;
+#endif
+
 #ifdef _USE_SDL_
         // TO ADD SDLCREATE HANDLER!
         case OL_SDLCREATE:

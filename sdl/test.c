@@ -1,18 +1,19 @@
+#define _REDEF_MAIN_
 #include "include/SDL2/SDL.h"
 #include "include/SDL2/SDL_timer.h"
 #include "include/SDL2/SDL_syswm.h"
+#undef main
+#include "../core.h"
 #include "ol.h"
 #include <stdio.h>
-#undef main
- 
-int main(int argc, char *argv[])
+
+void __main(OlPlatform platform, OlArgs args)
 {
     // returns zero on success else non-zero
-    ol_sdl_init();
     SDL_Event ev;
     int running = 1;
-    OlPanel p = ol_sdl_new("GAME", 500, 500, 0);
-    SDL_Window* win = p.win;
+    SDL_Window* win = platform.video_handle; // passed by __setup()
+    OlPanel p = {.win = win};
     OlColor col = {.r = 255, .g = 0, .b = 173};
     SDL_Renderer* rend = ol_sdl_renderer(p);
     ol_sdl_clear(rend, col);
@@ -30,5 +31,10 @@ int main(int argc, char *argv[])
     }
     SDL_DestroyWindow(win);
     SDL_Quit();
-    return 0;
+}
+
+void __setup(OlPlatform* platform)
+{
+    ol_sdl_init();
+    platform->video_handle = ol_sdl_new("My Window", 500, 400, OL_WIN_BASE).win;
 }
